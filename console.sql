@@ -4,11 +4,11 @@ create database airport;
 use airport;
 
 # Create table
-                          create table plane
-                      (
-                          registration_number int        not null primary key,
-                          model_number        varchar(5) not null
-    );
+create table plane
+(
+    registration_number int        not null primary key,
+    model_number        varchar(5) not null
+);
 
 create table test_track
 (
@@ -64,6 +64,8 @@ alter table technician_model
 alter table technician_model
     add foreign key (model_number) references model (model_number);
 
+SET FOREIGN_KEY_CHECKS = 0;
+
 # Insert data (at least 4 rows for each table)
 insert into plane(registration_number, model_number)
 values (1, 'AD123'),
@@ -102,6 +104,25 @@ values (1, 'FA123', '2020-01-02', 24, 100),
        (4, 'FA135', '1998-02-01', 10, 100);
 
 # queries
+# update
+update test_track
+set registration_number = 100
+where registration_number = 1;
+
+update test_track
+set registration_number = 1
+where registration_number = 100;
+
+# delete
+delete
+from test_track
+where registration_number = 10;
+
+delete
+from test_track
+where registration_number = 100;
+
+# select where
 select model_number, technician_id
 from technician_model
 where model_number like '%FA%';
@@ -110,9 +131,64 @@ select model_number, technician_id
 from technician_model
 where model_number like '%3%';
 
+# aggregate function
 select sum(score) as sum_score
 from test_track;
 select avg(score) as average_score
 from test_track;
 select max(score) as max_score
 from test_track;
+
+# group by having
+select FAA_number, sum(score) as sum_score
+from test_track
+group by FAA_number
+having sum_score > 100;
+
+select FAA_number, sum(score) as sum_score
+from test_track
+group by FAA_number
+having sum_score >= 100;
+
+# sub query
+select *
+from test_track
+where registration_number in (
+    select plane.registration_number
+    from plane
+);
+
+# store procedure
+DELIMITER //
+CREATE PROCEDURE get_all_plane()
+BEGIN
+    select * from plane;
+END //
+DELIMITER ;
+
+call get_all_plane();
+
+# function
+delimiter //
+CREATE FUNCTION get_sum_score()
+    returns int deterministic
+begin
+    declare sum_score int;
+
+    select sum(score) as sum_score
+    from test_track;
+
+    return sum_score;
+end //
+delimiter ;
+
+# trigger
+delimiter //
+create trigger after_update_plane
+    after update
+    on plane
+    for each row
+    insert into plane(registration_number, model_number)
+    values (old.registration_number, old.model_number);
+end //
+delimiter ;
